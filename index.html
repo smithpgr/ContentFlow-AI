@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContentFlow AI - LinkedIn Content Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mini-max-ai/api-client"></script>
+    <style>
+        :root {
+            --primary: #0077B5;
+            --secondary: #00a0dc;
+            --accent: #8f00ff;
+            --text: #33475b;
+            --light-bg: #f5f8fa;
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--light-bg);
+            color: var(--text);
+        }
+        
+        .navbar {
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .navbar .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: inline-block;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: var(--secondary);
+        }
+        
+        .btn-accent {
+            background: var(--accent);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            height: fit-content;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+        
+        .sidebar-menu a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: var(--light-bg);
+            color: var(--primary);
+        }
+        
+        .content-area {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .post-template {
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .post-template:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .post-content {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .post-metrics {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .post-scheduler {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .calendar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .calendar-day {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            margin: 2px;
+            border-radius: 4px;
+        }
+        
+        .calendar-day.today {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .calendar-day.selected {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .post-list {
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+        
+        .post-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .post-item .post-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .post-item.scheduled .post-status {
+            background: #28a745;
+        }
+        
+        .post-item.draft .post-status {
+            background: #6c757d;
+        }
+        
+        .post-item .post-time {
+            margin-left: auto;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: var(--primary);
+        }
+        
+        .stat-card p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .page-title {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        /* Login/Signup Styles */
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+        
+        .auth-toggle {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .auth-toggle button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #eee;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .auth-toggle button.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .auth-form {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .auth-form .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .auth-form .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .auth-form .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        
+        .auth-form .forgot-password {
+            text-align: right;
+            margin-top: 10px;
+        }
+        
+        .auth-form .forgot-password a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .signup-benefits {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .post-scheduler {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Section -->
+    <div id="auth-container" class="container auth-container">
+        <div class="auth-toggle">
+            <button id="login-toggle" class="active">Log In</button>
+            <button id="signup-toggle">Sign Up</button>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" class="form-control" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" class="form-control" placeholder="Enter your password">
+            </div>
+            <button id="login-btn" class="btn">Log In</button>
+            <div class="forgot-password">
+                <a href="#">Forgot password?</a>
+            </div>
+        </div>
+        
+        <!-- Signup Form -->
+        <div id="signup-form" class="auth-form hidden">
+            <div class="form-group">
+                <label for="signup-name">Name</label>
+                <input type="text" id="signup-name" class="form-control" placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" class="form-control" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" class="form-control" placeholder="Create a password">
+            </div>
+            <div class="form-group">
+                <label for="signup-company">Company Name</label>
+                <input type="text" id="signup-company" class="form-control" placeholder="Your company or agency name">
+            </div>
+            <button id="signup-btn" class="btn">Create Account</button>
+            <div class="signup-benefits">
+                <p>Get 7 days free trial. No credit card required.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Application (hidden until login) -->
+    <div id="app-container" class="hidden">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="logo">ContentFlow AI</div>
+            <div style="float: right; padding: 5px 20px;">
+                <span id="user-name"></span>
+                <button id="logout-btn" class="btn" style="margin-left: 15px; padding: 5px 10px; font-size: 14px;">Log Out</button>
+            </div>
+        </nav>
+        
+        <!-- Dashboard -->
+        <div class="container">
+            <div class="dashboard">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <ul class="sidebar-menu">
+                        <li><a href="#" class="active" data-view="dashboard">Dashboard</a></li>
+                        <li><a href="#" data-view="generate">Generate Content</a></li>
+                        <li><a href="#" data-view="schedule">Schedule Posts</a></li>
+                        <li><a href="#" data-view="analytics">Analytics</a></li>
+                        <li><a href="#" data-view="settings">Settings</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Content Area -->
+                <div class="content-area">
+                    <!-- Dashboard View -->
+                    <div id="view-dashboard" class="view">
+                        <h2 class="page-title">Dashboard</h2>
+                        
+                        <div class="header-section">
+                            <div class="stat-card" style="flex: 1;">
+                                <h3 id="total-posts">0</h3>
+                                <p>Total Posts Created</p>
+                            </div>
+                            <div class="stat-card" style="flex: 1;">
+                                <h3 id="scheduled-posts">0</h3>
+                                <p>Scheduled Posts</p>
+                            </div>
+                            <div class="stat-card" style="flex: 1;">
+                                <h3 id="engagement-rate">0%</h3>
+                                <p>Average Engagement Rate</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Recent Posts</h3>
+                            <div id="recent-posts-list" class="post-list">
+                                <div class="empty-state">
+                                    <i>📝</i>
+                                    <p>No posts yet. Start by generating some content!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Quick Generate</h3>
+                            <p>Create a new post in seconds</p>
+                            <button id="quick-generate-btn" class="btn btn-accent" style="margin-top: 10px;">Generate Content</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Generate Content View -->
+                    <div id="view-generate" class="view hidden">
+                        <h2 class="page-title">Generate Content</h2>
+                        
+                        <div class="card">
+                            <h3>Content Details</h3>
+                            <div class="form-group">
+                                <label for="post-topic">Topic/Subject</label>
+                                <input type="text" id="post-topic" class="form-control" placeholder="e.g., 'Q4 Marketing Trends'">
+                            </div>
+                            <div class="form-group">
+                                <label for="post-industry">Industry</label>
+                                <select id="post-industry" class="form-control">
+                                    <option value="">Select Industry</option>
+                                    <option value="tech">Technology</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="education">Education</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="post-tone">Tone of Voice</label>
+                                <select id="post-tone" class="form-control">
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="humorous">Humorous</option>
+                                    <option value="inspirational">Inspirational</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="post-cta">Call to Action (Optional)</label>
+                                <input type="text" id="post-cta" class="form-control" placeholder="e.g., 'Comment below with your thoughts'">
+                            </div>
+                            <button id="generate-post-btn" class="btn btn-accent">Generate Post</button>
+                        </div>
+                        
+                        <div id="generated-content-container" class="hidden">
+                            <div class="card">
+                                <h3>Generated Content</h3>
+                                <div id="generated-content" style="white-space: pre-wrap; padding: 15px; background: #f8f9fa; border-radius: 4px; margin-bottom: 15px;"></div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="edit-content-btn" class="btn">Edit</button>
+                                    <button id="save-content-btn" class="btn btn-accent">Save to Drafts</button>
+                                    <button id="schedule-content-btn" class="btn">Schedule Post</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Schedule View -->
+                    <div id="view-schedule" class="view hidden">
+                        <h2 class="page-title">Schedule Posts</h2>
+                        
+                        <div class="post-scheduler">
+                            <div class="card">
+                                <h3>Post Content</h3>
+                                <div id="schedule-post-content" style="margin-bottom: 15px; white-space: pre-wrap;"></div>
+                                <button id="edit-scheduled-post-btn" class="btn">Edit Content</button>
+                            </div>
+                            
+                            <div class="card">
+                                <h3>Schedule</h3>
+                                <div class="form-group">
+                                    <label for="schedule-date">Date</label>
+                                    <input type="date" id="schedule-date" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="schedule-time">Time</label>
+                                    <input type="time" id="schedule-time" class="form-control">
+                                </div>
+                                <button id="confirm-schedule-btn" class="btn btn-accent" style="width: 100%;">Schedule Post</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="margin-top: 20px;">
+                            <h3>Scheduled Posts</h3>
+                            <div id="scheduled-posts-list" class="post-list">
+                                <div class="empty-state">
+                                    <i>🗓️</i>
+                                    <p>No scheduled posts. Create and schedule a post to get started.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics View -->
+                    <div id="view-analytics" class="view hidden">
+                        <h2 class="page-title">Analytics</h2>
+                        
+                        <div class="card">
+                            <h3>Post Performance</h3>
+                            <p>Coming soon: Track engagement metrics, impressions, and post performance.</p>
+                            <div style="height: 300px; background: #f8f9fa; margin-top: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <p>Analytics charts will appear here</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="margin-top: 20px;">
+                            <h3>Top Performing Posts</h3>
+                            <div id="top-posts-list" class="post-list">
+                                <div class="empty-state">
+                                    <i>📊</i>
+                                    <p>No analytics data yet. Schedule and publish posts to see performance.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings View -->
+                    <div id="view-settings" class="view hidden">
+                        <h2 class="page-title">Settings</h2>
+                        
+                        <div class="card">
+                            <h3>Account Settings</h3>
+                            <div class="form-group">
+                                <label for="settings-company">Company Name</label>
+                                <input type="text" id="settings-company" class="form-control" placeholder="Your company or agency name">
+                            </div>
+                            <div class="form-group">
+                                <label for="settings-industry">Default Industry</label>
+                                <select id="settings-industry" class="form-control">
+                                    <option value="tech">Technology</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="education">Education</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="settings-tone">Default Tone</label>
+                                <select id="settings-tone" class="form-control">
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="humorous">Humorous</option>
+                                    <option value="inspirational">Inspirational</option>
+                                </select>
+                            </div>
+                            <button id="save-settings-btn" class="btn btn-accent">Save Settings</button>
+                        </div>
+                        
+                        <div class="card" style="margin-top: 20px;">
+                            <h3>Subscription</h3>
+                            <p>Current Plan: <span id="current-plan">Starter</span></p>
+                            <p>Status: <span id="subscription-status">Active</span></p>
+                            <button id="upgrade-plan-btn" class="btn" style="margin-top: 10px;">Upgrade Plan</button>
+                        </div>
+                        
+                        <div class="card" style="margin-top: 20px;">
+                            <h3>LinkedIn Connection</h3>
+                            <p>Connect your LinkedIn account to enable auto-posting.</p>
+                            <button id="connect-linkedin-btn" class="btn">Connect LinkedIn</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Post Templates Modal -->
+        <div id="templates-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Post Templates</h3>
+                    <button class="close-btn" id="close-templates-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="templates-container">
+                        <!-- Templates will be dynamically added here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-templates-btn" class="btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upgrade Plan Modal -->
+        <div id="upgrade-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Upgrade Your Plan</h3>
+                    <button class="close-btn" id="close-upgrade-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <h3>Starter Plan</h3>
+                        <p>Perfect for individual users and small teams</p>
+                        <p><strong>$49/month</strong></p>
+                        <ul>
+                            <li>1 client account</li>
+                            <li>10 posts/month</li>
+                            <li>Basic analytics</li>
+                        </ul>
+                        <button class="btn" style="background: #ccc; cursor: default;">Current Plan</button>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Agency Plan</h3>
+                        <p>For marketing agencies and growing teams</p>
+                        <p><strong>$199/month</strong></p>
+                        <ul>
+                            <li>10 client accounts</li>
+                            <li>Unlimited posts</li>
+                            <li>White-label reports</li>
+                            <li>Priority support</li>
+                        </ul>
+                        <button id="upgrade-to-agency-btn" class="btn btn-accent">Upgrade Now</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-upgrade-btn" class="btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sample data storage (in a real app, this would be on a server)
+            let userData = {
+                name: '',
+                company: '',
+                industry: 'tech',
+                tone: 'professional',
+                posts: [],
+                scheduledPosts: []
+            };
+            
+            // Simulated user database
+            const users = [
+                { email: 'test@agency.com', password: 'password123', name: 'Agency User', company: 'Digital Marketing Agency' }
+            ];
+            
+            // UI State management
+            const views = {
+                currentView: 'dashboard',
+                showView: function(viewName) {
+                    // Hide all views
+                    document.querySelectorAll('.view').forEach(view => {
+                        view.classList.add('hidden');
+                    });
+                    
+                    // Show selected view
+                    const viewElement = document.getElementById(`view-${viewName}`);
+                    if (viewElement) {
+                        viewElement.classList.remove('hidden');
+                    }
+                    
+                    // Update active menu item
+                    document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('data-view') === viewName) {
+                            link.classList.add('active');
+                        }
+                    });
+                    
+                    this.currentView = viewName;
+                }
+            };
+            
+            // Authentication
+            const auth = {
+                isLoggedIn: false,
+                login: function(email, password) {
+                    const user = users.find(u => u.email === email && u.password === password);
+                    if (user) {
+                        this.isLoggedIn = true;
+                        userData.name = user.name;
+                        userData.company = user.company || 'My Agency';
+                        document.getElementById('user-name').textContent = `Welcome, ${user.name}`;
+                        document.getElementById('auth-container').classList.add('hidden');
+                        document.getElementById('app-container').classList.remove('hidden');
+                        this.updateDashboard();
+                        views.showView('dashboard');
+                        return true;
+                    }
+                    return false;
+                },
+                
+                signup: function(name, email, password, company) {
+                    // Check if user already exists
+                    if (users.some(u => u.email === email)) {
+                        alert('User with this email already exists');
+                        return false;
+                    }
+                    
+                    // Add new user
+                    users.push({
+                        email: email,
+                        password: password,
+                        name: name,
+                        company: company
+                    });
+                    
+                    // Log in the new user
+                    this.login(email, password);
+                    return true;
+                },
+                
+                logout: function() {
+                    this.isLoggedIn = false;
+                    document.getElementById('auth-container').classList.remove('hidden');
+                    document.getElementById('app-container').classList.add('hidden');
+                    views.showView('login');
+                },
+                
+                updateDashboard: function() {
+                    // Update stats
+                    document.getElementById('total-posts').textContent = userData.posts.length;
+                    document.getElementById('scheduled-posts').textContent = userData.scheduledPosts.length;
+                    
+                    // Calculate average engagement (simulated)
+                    const avgEngagement = userData.posts.length > 0 
+                        ? Math.floor(Math.random() * 10) + 3 
+                        : 0;
+                    document.getElementById('engagement-rate').textContent = `${avgEngagement}%`;
+                    
+                    // Update recent posts
+                    const postsList = document.getElementById('recent-posts-list');
+                    if (userData.posts.length === 0) {
+                        postsList.innerHTML = `
+                            <div class="empty-state">
+                                <i>📝</i>
+                                <p>No posts yet. Start by generating some content!</p>
+                            </div>
+                        `;
+                    } else {
+                        let html = '<h3>Recent Posts</h3>';
+                        // Show only the 3 most recent posts
+                        userData.posts.slice(-3).reverse().forEach(post => {
+                            html += `
+                                <div class="post-item draft">
+                                    <div class="post-status"></div>
+                                    <div class="post-content">${post.content.substring(0, 50)}${post.content.length > 50 ? '...' : ''}</div>
+                                    <div class="post-time">${post.date ? new Date(post.date).toLocaleDateString() : 'Draft'}</div>
+                                </div>
+                            `;
+                        });
+                        postsList.innerHTML = html;
+                    }
+                }
+            };
+            
+            // UI Event handlers
+            const ui = {
+                init: function() {
+                    // Authentication form toggling
+                    document.getElementById('login-toggle').addEventListener('click', () => {
+                        document.getElementById('login-form').classList.remove('hidden');
+                        document.getElementById('signup-form').classList.add('hidden');
+                        document.getElementById('login-toggle').classList.add('active');
+                        document.getElementById('signup-toggle').classList.remove('active');
+                    });
+                    
+                    document.getElementById('signup-toggle').addEventListener('click', () => {
+                        document.getElementById('login-form').classList.add('hidden');
+                        document.getElementById('signup-form').classList.remove('hidden');
+                        document.getElementById('login-toggle').classList.remove('active');
+                        document.getElementById('signup-toggle').classList.add('active');
+                    });
+                    
+                    // Login form submission
+                    document.getElementById('login-btn').addEventListener('click', () => {
+                        const email = document.getElementById('login-email').value;
+                        const password = document.getElementById('login-password').value;
+                        
+                        if (auth.login(email, password)) {
+                            // Clear form
+                            document.getElementById('login-email').value = '';
+                            document.getElementById('login-password').value = '';
+                        } else {
+                            alert('Invalid email or password');
+                        }
+                    });
+                    
+                    // Signup form submission
+                    document.getElementById('signup-btn').addEventListener('click', () => {
+                        const name = document.getElementById('signup-name').value;
+                        const email = document.getElementById('signup-email').value;
+                        const password = document.getElementById('signup-password').value;
+                        const company = document.getElementById('signup-company').value;
+                        
+                        if (name && email && password) {
+                            if (auth.signup(name, email, password, company)) {
+                                // Clear form
+                                document.getElementById('signup-name').value = '';
+                                document.getElementById('signup-email').value = '';
+                                document.getElementById('signup-password').value = '';
+                                document.getElementById('signup-company').value = '';
+                            }
+                        } else {
+                            alert('Please fill in all required fields');
+                        }
+                    });
+                    
+                    // Logout
+                    document.getElementById('logout-btn').addEventListener('click', () => {
+                        auth.logout();
+                    });
+                    
+                    // Sidebar navigation
+                    document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const viewName = link.getAttribute('data-view');
+                            views.showView(viewName);
+                        });
+                    });
+                    
+                    // Quick generate button
+                    document.getElementById('quick-generate-btn').addEventListener('click', () => {
+                        views.showView('generate');
+                    });
+                    
+                    // Generate post button
+                    document.getElementById('generate-post-btn').addEventListener('click', () => {
+                        this.generatePost();
+                    });
+                    
+                    // Save content button
+                    document.getElementById('save-content-btn').addEventListener('click', () => {
+                        this.savePost();
+                    });
+                    
+                    // Schedule content button
+                    document.getElementById('schedule-content-btn').addEventListener('click', () => {
+                        this.prepSchedulePost();
+                    });
+                    
+                    // Confirm schedule button
+                    document.getElementById('confirm-schedule-btn').addEventListener('click', () => {
+                        this.schedulePost();
+                    });
+                    
+                    // Upgrade plan button
+                    document.getElementById('upgrade-plan-btn').addEventListener('click', () => {
+                        document.getElementById('upgrade-modal').classList.remove('hidden');
+                    });
+                    
+                    // Close modals
+                    document.querySelectorAll('.close-btn, #cancel-templates-btn, #cancel-upgrade-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.modal').forEach(modal => {
+                                modal.classList.add('hidden');
+                            });
+                        });
+                    });
+                    
+                    // Edit settings
+                    document.getElementById('save-settings-btn').addEventListener('click', () => {
+                        userData.company = document.getElementById('settings-company').value;
+                        userData.industry = document.getElementById('settings-industry').value;
+                        userData.tone = document.getElementById('settings-tone').value;
+                        alert('Settings saved!');
+                    });
+                },
+                
+                generatePost: function() {
+                    // Show loading
+                    const generateBtn = document.getElementById('generate-post-btn');
+                    generateBtn.disabled = true;
+                    generateBtn.textContent = 'Generating...';
+                    
+                    // Simulate API call delay
+                    setTimeout(() => {
+                        // Get inputs
+                        const topic = document.getElementById('post-topic').value;
+                        const industry = document.getElementById('post-industry').value;
+                        const tone = document.getElementById('post-tone').value;
+                        const cta = document.getElementById('post-cta').value;
+                        
+                        // Generate simulated content
+                        // In a real app, this would call the MiniMax AI API
+                        const generatedContent = this.simulateAIGeneration(topic, industry, tone, cta);
+                        
+                        // Show generated content
+                        document.getElementById('generated-content').textContent = generatedContent;
+                        document.getElementById('generated-content-container').classList.remove('hidden');
+                        
+                        // Reset button
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = 'Generate Post';
+                    }, 1500);
+                },
+                
+                simulateAIGeneration: function(topic, industry, tone, cta) {
+                    // This is a simulation of AI content generation
+                    // In a real app, this would call the MiniMax AI API
+                    let content = `**${topic}**\n\n`;
+                    
+                    if (industry === 'tech') {
+                        content += `The tech industry continues to evolve at a rapid pace. ${topic} is reshaping how we approach business challenges.`;
+                    } else if (industry === 'marketing') {
+                        content += `Marketing strategies need to adapt to changing consumer behaviors. ${topic} offers fresh insights for modern marketers.`;
+                    } else if (industry === 'finance') {
+                        content += `Financial markets remain volatile. ${topic} provides valuable perspectives for investors and analysts.`;
+                    } else {
+                        content += `In today's business landscape, ${topic} represents a key area of focus for forward-thinking organizations.`;
+                    }
+                    
+                    if (tone === 'professional') {
+                        content += "\n\nThe data suggests organizations should prioritize this area to maintain competitive advantage. What are your thoughts?";
+                    } else if (tone === 'casual') {
+                        content += "\n\nPretty interesting stuff! Have you noticed this in your work? Let's chat in the comments.";
+                    } else if (tone === 'humorous') {
+                        content += "\n\nWho knew spreadsheets could be so exciting? 🙃 Let me know if you can relate!";
+                    } else if (tone === 'inspirational') {
+                        content += "\n\nThe future is bright for those who embrace change and innovation. What's your next move?";
+                    }
+                    
+                    if (cta) {
+                        content += `\n\n${cta}`;
+                    }
+                    
+                    return content;
+                },
+                
+                savePost: function() {
+                    const content = document.getElementById('generated-content').textContent;
+                    
+                    if (!content) {
+                        alert('No content to save');
+                        return;
+                    }
+                    
+                    // Add to posts
+                    userData.posts.push({
+                        id: Date.now(),
+                        content: content,
+                        date: null,
+                        status: 'draft'
+                    });
+                    
+                    alert('Post saved to drafts!');
+                    auth.updateDashboard();
+                },
+                
+                prepSchedulePost: function() {
+                    const content = document.getElementById('generated-content').textContent;
+                    
+                    if (!content) {
+                        alert('No content to schedule');
+                        return;
+                    }
+                    
+                    // Store the content for scheduling
+                    window.scheduledContent = content;
+                    
+                    // Show in scheduler
+                    document.getElementById('schedule-post-content').textContent = content;
+                    
+                    // Show schedule view
+                    views.showView('schedule');
+                },
+                
+                schedulePost: function() {
+                    const date = document.getElementById('schedule-date').value;
+                    const time = document.getElementById('schedule-time').value;
+                    
+                    if (!date || !time) {
+                        alert('Please select both date and time');
+                        return;
+                    }
+                    
+                    // Combine date and time
+                    const dateTime = new Date(`${date}T${time}`);
+                    
+                    // Add to scheduled posts
+                    userData.scheduledPosts.push({
+                        id: Date.now(),
+                        content: window.scheduledContent,
+                        date: dateTime.toISOString(),
+                        status: 'scheduled'
+                    });
+                    
+                    alert('Post scheduled successfully!');
+                    auth.updateDashboard();
+                    views.showView('dashboard');
+                }
+            };
+            
+            // Initialize the UI
+            ui.init();
+        });
+    </script>
+</body>
+</html>
