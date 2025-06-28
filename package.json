@@ -1,0 +1,24 @@
+{
+  "name": "contentflow-ai",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smithpgr/ContentFlow-AI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/smithpgr/ContentFlow-AI/issues"
+  },
+  "homepage": "https://github.com/smithpgr/ContentFlow-AI#readme",
+  "dependencies": {
+    "openai": "^5.8.2"
+  }
+}
