@@ -3,86 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>ContentFlow AI — LinkedIn Content Generator</title>
-
-  <!-- Vendor libs -->
+  <title>ContentFlow AI — LinkedIn Content Generator</title>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Stripe -->
   <script src="https://js.stripe.com/v3"></script>
-
-  <!-- Fonts & base colours -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-
   <style>
     :root{
       --pri:#0077b5;--pri-dark:#005582;--txt:#33475b;--bg:#f5f8fa;--card:#fff;--brd:#e5eaf0;
       --pri-darkmode:#2ea8ff;--txt-dark:#e8eef7;--bg-dark:#1c2025;--card-dark:#24303d;--brd-dark:#364454;
     }
     body.dark{--pri:var(--pri-darkmode);--txt:var(--txt-dark);--bg:var(--bg-dark);--card:var(--card-dark);--brd:var(--brd-dark)}
-    *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;min-height:100vh}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;min-height:100vh}
+    header{background:var(--card);border-bottom:1px solid var(--brd);padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+    nav{display:flex;gap:.75rem;margin-bottom:1rem}
+    nav a{padding:.4rem .7rem;border-radius:4px;text-decoration:none;color:inherit;font-weight:500}
+    nav a.active,nav a:hover{background:var(--pri);color:#fff}
     .container{max-width:1100px;margin:auto;padding:1rem}
     .card{background:var(--card);border:1px solid var(--brd);border-radius:8px;padding:1.25rem}
     .hidden{display:none!important}
     button{font:inherit;cursor:pointer;border:none;border-radius:4px;padding:.6rem 1.2rem;font-weight:600;background:var(--pri);color:#fff;transition:background .15s}
     button:hover{background:var(--pri-dark)}
-    /* simple layout */
-    header{background:var(--card);border-bottom:1px solid var(--brd);padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0}
-    nav{display:flex;gap:.75rem;margin-bottom:1rem}
-    nav a{padding:.4rem .7rem;border-radius:4px;text-decoration:none;color:inherit;font-weight:500}
-    nav a.active,nav a:hover{background:var(--pri);color:#fff}
+    input,select{font:inherit;border:1px solid var(--brd);border-radius:4px;padding:.55rem .65rem;background:var(--card);color:inherit;width:100%}
+    .grid{display:grid;gap:1.25rem}
+    @media(min-width:800px){.grid-cols-2{grid-template-columns:220px 1fr}}
   </style>
 </head>
 <body>
   <header>
-    <span style="font-weight:700;font-size:1.25rem;color:var(--pri)">ContentFlow AI</span>
+    <span style="font-weight:700;font-size:1.25rem;color:var(--pri)">ContentFlow AI</span>
     <span id="user-name"></span>
   </header>
 
-  <main class="container">
-    <!-- simple nav -->
-    <nav>
+  <main class="container grid grid-cols-2">
+    <!-- sidebar -->
+    <nav style="flex-direction:column" class="card">
       <a href="#" data-view="dashboard" class="active">Dashboard</a>
+      <a href="#" data-view="generate">Generate</a>
+      <a href="#" data-view="schedule">Schedule</a>
       <a href="#" data-view="billing">Billing</a>
+      <a href="#" data-view="settings">Settings</a>
     </nav>
 
-    <!-- DASHBOARD VIEW -->
+    <!-- views -->
     <section id="view-dashboard" class="view">
-      <h2 style="margin-bottom:1rem">Dashboard</h2>
-      <div class="card" style="max-width:400px">
+      <h2>Dashboard</h2>
+      <div class="card" style="max-width:380px">
         <canvas id="chart" height="140"></canvas>
       </div>
     </section>
 
-    <!-- BILLING VIEW -->
+    <section id="view-generate" class="view hidden">
+      <h2>Generate Content</h2>
+      <div class="card" style="max-width:500px">
+        <div style="margin-bottom:.8rem"><label>Topic</label><input id="topic"></div>
+        <div style="margin-bottom:.8rem"><label>Industry</label><select id="industry"><option>Technology</option><option>Finance</option></select></div>
+        <div style="margin-bottom:.8rem"><label>Tone</label><select id="tone"><option>Professional</option><option>Casual</option></select></div>
+        <div style="margin-bottom:.8rem"><label>CTA</label><input id="cta"></div>
+        <button id="generate-btn" style="width:100%">Generate</button>
+      </div>
+      <div id="gen-out" class="card hidden" style="white-space:pre-wrap;margin-top:1rem"></div>
+    </section>
+
+    <section id="view-schedule" class="view hidden">
+      <h2>Schedule</h2>
+      <p>Coming soon.</p>
+    </section>
+
     <section id="view-billing" class="view hidden">
-      <h2 style="margin-bottom:1rem">Billing</h2>
+      <h2>Billing</h2>
       <div class="card" style="max-width:420px">
-        <h3>Pro Plan — A$29 / month</h3>
+        <h3>Pro Plan — A$29 / month</h3>
         <p style="margin:.5rem 0 1rem">Unlimited AI posts • 5 seats • priority support</p>
         <button id="subscribe-btn" style="width:100%">Subscribe with Stripe</button>
         <p id="billing-status" style="margin-top:.75rem;font-size:.9rem;color:var(--txt)">You’re on the free plan.</p>
       </div>
     </section>
+
+    <section id="view-settings" class="view hidden">
+      <h2>Settings</h2>
+      <p>Coming soon.</p>
+    </section>
   </main>
 
-  <script>
-    /* -------- view switching -------- */
-    const qs=(s,ctx=document)=>ctx.querySelector(s);const qsa=(s,ctx=document)=>[...ctx.querySelectorAll(s)];
-    const switchView=(v)=>{qsa('.view').forEach(el=>el.classList.add('hidden'));qs(`#view-${v}`).classList.remove('hidden');qsa('nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));};
-    qsa('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();switchView(a.dataset.view);}));
-
-    /* -------- chart demo -------- */
-    new Chart(document.getElementById('chart'),{type:'bar',data:{labels:['Posts','Scheduled'],datasets:[{data:[8,3]}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-
-    /* -------- stripe checkout -------- */
-    const stripe=Stripe('pk_live_51QYi7aGLUAgVh3iNtqGncPFaMWd5W2OZGgYapnk2tLe1DbLIno3GyRcRWXfQrTQjl4fU7ijbbzTPSPaTx7jPkDFU009WCA30R8');
-    qs('#subscribe-btn').addEventListener('click',async()=>{
-      try{
-        const res=await fetch('/create-checkout-session',{method:'POST'});
-        const {id}=await res.json();
-        await stripe.redirectToCheckout({sessionId:id});
-      }catch(err){alert('Checkout error → '+err.message);}  
-    });
-  </script>
+<script>
+const qs=(s,ctx=document)=>ctx.querySelector(s);const qsa=(s,ctx=document)=>[...ctx.querySelectorAll(s)];
+const switchView=v=>{qsa('.view').forEach(el=>el.classList.add('hidden'));qs('#view-'+v).classList.remove('hidden');qsa('nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));};
+qsa('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();switchView(a.dataset.view);}));
+// demo chart
+new Chart(document.getElementById('chart'),{type:'bar',data:{labels:['Posts','Scheduled'],datasets:[{data:[8,3],backgroundColor:'#66b3ff'}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+// simple OpenAI call (replace key if used server-side proxy)
+const generate=async(o)=>{const prompt=`Write a LinkedIn post about ${o.topic} for the ${o.industry} industry in a ${o.tone} tone. End with: ${o.cta}`;const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer YOUR_OPENAI_KEY'},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:280})});const j=await r.json();return j.choices?.[0]?.message?.content?.trim()||'error';};
+// handlers
+qs('#generate-btn').addEventListener('click',async()=>{qs('#generate-btn').textContent='Generating…';const o={topic:qs('#topic').value,industry:qs('#industry').value,tone:qs('#tone').value,cta:qs('#cta').value};const txt=await generate(o);qs('#gen-out').textContent=txt;qs('#gen-out').classList.remove('hidden');qs('#generate-btn').textContent='Generate';});
+// Stripe checkout
+const stripe=Stripe('pk_live_51QYi7aGLUAgVh3iNtqGncPFaMWd5W2OZGgYapnk2tLe1DbLIno3GyRcRWXfQrTQjl4fU7ijbbzTPSPaTx7jPkDFU009WCA30R8');
+qs('#subscribe-btn').addEventListener('click',async()=>{try{const res=await fetch('/.netlify/functions/create-checkout-session',{method:'POST'});const {id}=await res.json();await stripe.redirectToCheckout({sessionId:id});}catch(e){alert('Checkout error '+e.message);} });
+switchView('dashboard');
+</script>
 </body>
 </html>
